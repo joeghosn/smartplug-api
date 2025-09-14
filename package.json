@@ -4,27 +4,37 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "tsx watch src/server.ts",
+    "dev:ts-node": "ts-node-dev --respawn --transpile-only --esm --experimental-specifier-resolution=node src/server.ts",
+    "dev:inspect": "tsx watch --inspect src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "start:dev": "npm run build && npm run start",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@prisma/client": "^6.16.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
+    "prisma": "^6.16.1",
     "uuid": "^13.0.0",
     "zod": "^4.1.8"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
-    "@types/node": "^24.3.3",
+    "@types/node": "^24.4.0",
     "@types/uuid": "^10.0.0",
+    "prettier": "^3.6.2",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   }
 }

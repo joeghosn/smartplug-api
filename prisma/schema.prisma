@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Device {
+  id               String   @id @default(cuid())
+  name             String   @db.VarChar(255)
+  chipId           String   @unique @db.VarChar(32)
+  apiTokenHash     String   @unique @db.VarChar(64) 
+  timezone         String?  @db.VarChar(50) 
+  
+  lastSeenAt       DateTime? 
+  lastStatusAt     DateTime?  
+  lastStatusJson   Json?    
+  
+  scheduleVersion  Int       @default(0) 
+  
+  pendingRelayOn   Boolean?  
+  
+  createdAt        DateTime  @default(now()) 
+  updatedAt        DateTime  @updatedAt 
+  
+  schedules        Schedule[]
+  edgeLists        EdgeList[]
+  
+  @@index([lastSeenAt])
+  @@index([scheduleVersion])
+  @@map("devices")
+}
+
+// Human-readable schedule rules
+model Schedule {
+  id          String   @id @default(cuid()) // Explicit primary key
+  deviceId    String   @db.VarChar(36)      // CUID length
+  version     Int      // Unique per device
+  timezone    String   @db.VarChar(50)      // IANA timezone
+  rulesJson   Json     // Array of window/duration/countdown rules
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  
+  // Constraints & Indexes
+  @@unique([deviceId, version])
+  @@index([deviceId])
+  @@index([createdAt])
+  @@map("schedules")
+}
+
+// Compiled UTC edge events for device execution
+model EdgeList {
+  id               String   @id @default(cuid()) // Explicit primary key
+  deviceId         String   @db.VarChar(36)      // CUID length
+  scheduleVersion  Int      
+  
+  // Compilation metadata
+  generatedAt      DateTime @default(now())
+  validUntil       DateTime // When this compilation expires (~14 days)
+  
+  // UTC edge events: [{ tsUtc: "ISO", on: boolean }]
+  edgesJson        Json     
+  
+  // Relations
+  device           Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  
+  // Constraints & Indexes
+  @@unique([deviceId, scheduleVersion])
+  @@index([deviceId])
+  @@index([validUntil])
+  @@index([generatedAt])
+  @@map("edgelists")
+}
+
+// Optional: Hourly readings for analytics (commented out for MVP)
+// model ReadingHourly {
+//   deviceId     String   @map("device_id")
+//   hourUtc      DateTime @map("hour_utc") // Truncated to hour
+//   
+//   avgPowerW    Float?   @map("avg_power_w")
+//   avgVoltageV  Float?   @map("avg_voltage_v")
+//   avgCurrentA  Float?   @map("avg_current_a")
+//   kwhDelta     Float?   @map("kwh_delta") // kWh consumed this hour
+//   relayOnTime  Int?     @map("relay_on_time") // Minutes relay was ON
+//   
+//   createdAt    DateTime @default(now()) @map("created_at")
+//   
+//   device       Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+//   
+//   @@unique([deviceId, hourUtc])
+//   @@map("readings_hourly")
+// }
+

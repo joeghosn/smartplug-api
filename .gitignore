@@ -118,3 +118,4 @@ config/local.json
 
 # PM2 ecosystem file
 ecosystem.config.js
+/generated/prisma
